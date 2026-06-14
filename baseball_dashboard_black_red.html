@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baseball Athletic Dashboard</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #000000;
+        color: white;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 30px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #bbbbbb;
+        margin-bottom: 40px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .card {
+        background: #111111;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 18px rgba(255,0,0,.15);
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        margin-bottom: 15px;
+        font-size: 16px;
+    }
+
+    .btn {
+        background: #c1121f;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .results {
+        margin-top: 40px;
+    }
+
+    .result-card {
+        background: #1a0000;
+        padding: 18px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+    }
+
+    .percentile {
+        font-size: 32px;
+        font-weight: bold;
+        color: #ff3b3b;
+    }
+
+    .grade {
+        font-size: 20px;
+        color: #ff8080;
+    }
+</style>
+</head>
+<body>
+
+
+<div class="container">
+    <div style="text-align:center; margin-bottom:20px;">
+        <img src="Velocity-Baseball-Softball-Logo1(7).png" alt="Velocity Logo" style="width:220px; max-width:80%;">
+    </div>
+
+    <h1>Baseball Athletic Performance Dashboard</h1>
+    <div class="subtitle">
+        Enter your testing metrics to compare yourself against the athlete database.
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <label>1-10 Fly Time</label>
+            <input type="number" step="0.001" id="fly">
+        </div>
+
+        <div class="card">
+            <label>Abakalov Jump Height</label>
+            <input type="number" step="0.1" id="abakalov">
+        </div>
+
+        <div class="card">
+            <label>30yd Sprint Average</label>
+            <input type="number" step="0.01" id="sprint30">
+        </div>
+
+        <div class="card">
+            <label>Impulse (N/s)</label>
+            <input type="number" step="0.1" id="impulse">
+        </div>
+
+        <div class="card">
+            <label>IMTP Peak Vertical Force</label>
+            <input type="number" step="1" id="imtp">
+        </div>
+
+        <div class="card">
+            <label>RSI Mod</label>
+            <input type="number" step="0.01" id="rsi">
+        </div>
+    </div>
+
+    <button class="btn" onclick="calculate()">Calculate Percentiles</button>
+
+    <div class="results" id="results"></div>
+</div>
+
+<script>
+const metricData = {"1-10 Fly": {"values": [1.48, 1.413, 1.42, 1.46, 1.6, 1.44, 1.61, 1.68, 1.5, 1.48], "reverse": true}, "Abakalov": {"values": [20.4, 25.6, 22.78, 22.3, 19.34, 22.53, 17.28, 16.0, 22.4], "reverse": false}, "30yd Sprint": {"values": [3.5499999999999994, 3.6799999999999997, 3.736666666666667, 3.793333333333333, 3.8033333333333332, 3.83, 3.88, 3.89, 3.953333333333333, 3.98, 3.99, 3.99, 3.9933333333333336, 4.0, 4.053333333333334, 4.13, 4.133333333333333, 4.14, 4.146666666666667, 4.16, 4.23, 4.25, 4.286666666666666, 4.31, 4.336666666666667, 4.53], "reverse": true}, "Impulse": {"values": [277.5, 305.0, 310.9, 249.9, 241.3, 252.8, 173.4, 170.9, 286.6], "reverse": false}, "IMTP (2)": {"values": [3872.0, 3587.0, 5133.67, 3051.0, 3468.76, 3657.67, 2448.76, 2111.0, 3374.0, 3468.76], "reverse": false}, "RSI Mod": {"values": [0.69, 0.84, 0.81, 0.66, 0.5, 0.82, 0.57, 0.4, 0.73], "reverse": false}};
+
+function percentileRank(arr, value, reverse=false) {
+    const sorted = [...arr].sort((a,b) => a-b);
+
+    let count = 0;
+    for (let v of sorted) {
+        if (v <= value) count++;
+    }
+
+    let pct = ((count - 1) / (sorted.length - 1)) * 100;
+
+    if (reverse) {
+        pct = 100 - pct;
+    }
+
+    return Math.max(0, Math.min(100, Math.round(pct)));
+}
+
+function athleteGrade(percentile) {
+    return Math.round((20 + percentile * 0.6) * 10) / 10;
+}
+
+function createResult(name, percentile, grade) {
+    return `
+        <div class="result-card">
+            <h2>${name}</h2>
+            <div class="percentile">${percentile}th Percentile</div>
+            <div class="grade">Athlete Grade: ${grade}</div>
+        </div>
+    `;
+}
+
+function calculate() {
+    const inputs = {
+        "1-10 Fly": parseFloat(document.getElementById("fly").value),
+        "Abakalov": parseFloat(document.getElementById("abakalov").value),
+        "30yd Sprint": parseFloat(document.getElementById("sprint30").value),
+        "Impulse": parseFloat(document.getElementById("impulse").value),
+        "IMTP (2)": parseFloat(document.getElementById("imtp").value),
+        "RSI Mod": parseFloat(document.getElementById("rsi").value),
+    };
+
+    let html = "";
+
+    for (const [metric, value] of Object.entries(inputs)) {
+        if (!isNaN(value)) {
+            const data = metricData[metric];
+            const pct = percentileRank(data.values, value, data.reverse);
+            const grade = athleteGrade(pct);
+
+            html += createResult(metric, pct, grade);
+        }
+    }
+
+    document.getElementById("results").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
